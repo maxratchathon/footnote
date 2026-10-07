@@ -44,11 +44,7 @@ The prompt numbers the retrieved chunks; the model answers with markers like `[1
 
 ## Build stages
 
-1. **Basic RAG**: ingest Markdown and plain text (chunk, embed, store); question flow (embed question, top-k by cosine, build prompt, stream answer with working citations).
-2. **Evals**: a JSON file of 30–50 questions with expected source document/chunk; one command reports retrieval hit rate (expected source in top-k?); each run is stored in Postgres so runs can be compared.
-3. **Better retrieval**: hybrid search with Postgres full-text search, then reranking and query rewriting. **Keep a change only if the Stage 2 score improves.**
-4. **Agent loop**: hand-written tool-calling loop (tools: search corpus, fetch full document), with an iteration cap and tool-error handling.
-5. **Production concerns**: fill `traces` on every request plus a simple trace viewer; per-request cost and latency; embedding caching; basic prompt-injection guardrails for document content.
+The roadmap, with each stage's learning purpose and done criteria, is in `docs/plans/overview.md`; each stage gets a detailed plan next to it. In short: 1 basic RAG, 2 evals, 3 better retrieval, 4 agent loop, 5 production concerns. Finish and verify a stage before starting the next. In Stage 3, **keep a change only if the Stage 2 score improves.**
 
 ## Decisions
 
@@ -79,6 +75,7 @@ There is no test runner yet; Stage 2 evals will be the main quality check.
 - `scripts/`: CLI entry points run with `tsx` (`migrate.ts`, `ingest.ts`).
 - `db/migrations/`: plain SQL. `{{EMBED_DIM}}` is substituted from `EMBED_DIM` by the migration runner.
 - `sample-corpus/`: invented docs for a fictional company (Halyard Labs, product Tidewater) for smoke tests. Too small for evals. The real corpus goes in the git-ignored `corpus/`.
+- `docs/plans/`: `overview.md` (roadmap and status table, keep it current) plus one implementation plan per piece of work, with checkboxes. Read the relevant plan before starting, tick items off as they are done, and update its status line.
 
 ## Retrieval details that span files
 
