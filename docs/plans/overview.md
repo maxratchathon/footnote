@@ -4,8 +4,8 @@ FootnoteRAG is a learning project: each stage exists to teach one part of how a 
 
 | Stage | Topic | Status | Detailed plan |
 |---|---|---|---|
-| 1 | Basic RAG | In progress: ingestion done, question flow built (awaiting review) | [stage-1-question-flow.md](stage-1-question-flow.md) |
-| 2 | Evals | Not started; needs the real corpus | — |
+| 1 | Basic RAG | Done | [stage-1-question-flow.md](stage-1-question-flow.md) |
+| 2 | Evals | Next; corpus is a Thai rental-room guide (93 chunks) | — |
 | 3 | Better retrieval | Not started | — |
 | 4 | Agent loop | Not started | — |
 | 5 | Production concerns | Not started | — |
@@ -26,11 +26,13 @@ Finish and verify each stage before starting the next. Later stages depend on ea
 
 **What we build**
 - Part 1, done: `pnpm ingest` reads Markdown/text, chunks it at headings and paragraphs, embeds the chunks with `nomic-embed-text` and stores them in pgvector. Re-running it only processes changed files.
-- Part 2, built: question → embed → top-k → prompt → streamed answer with `[n]` markers that open their source chunk in the UI. Each question is logged in `traces`.
+- Part 2, done: question → embed → top-k → prompt → streamed answer with `[n]` markers that open their source chunk in the UI. Each question is logged in `traces`.
 
 **Done when:** a question about the corpus returns a streamed answer with working citations, and an off-topic question gets a refusal instead of a guess.
 
-**Observed so far:** "What happens if I get paged at 3am?" found the right document but ranked the right section (`On-call > Pay`) only 4th. Top 5 rescued it; top 3 would have missed it. This is the first concrete retrieval weak spot, and it motivates Stages 2 and 3.
+**Lesson from the real corpus:** the first embedding model (`nomic-embed-text`) could not read Thai and made retrieval silently random, with no errors anywhere. Switching to the multilingual `bge-m3` fixed it. An embedding model only works for languages its tokenizer covers.
+
+**Observed on the sample corpus:** "What happens if I get paged at 3am?" found the right document but ranked the right section (`On-call > Pay`) only 4th. Top 5 rescued it; top 3 would have missed it. This is the first concrete retrieval weak spot, and it motivates Stages 2 and 3.
 
 ---
 
@@ -47,7 +49,7 @@ Finish and verify each stage before starting the next. Later stages depend on ea
 - One command that runs every question and reports the hit rate at k.
 - An `eval_runs` table (via a new migration) recording each run's settings and score, so runs can be compared.
 
-**Depends on:** the real corpus. Evals on 11 invented files would not tell us much; questions must be about documents large and varied enough for retrieval to fail sometimes.
+**Depends on:** the real corpus, now a Thai rental-room guide in `corpus/` (93 chunks). Questions can be asked in Thai or English (`bge-m3` matches across languages), and including both is worth measuring. The Thai bug is the case for evals: one test question ("ค่าเสียโอกาส → section 14") would have scored 0% and caught it immediately.
 
 **Done when:** one command gives a score, and a change to chunking (e.g. `targetChars`, or adding overlap) visibly moves it.
 
@@ -58,6 +60,7 @@ Finish and verify each stage before starting the next. Later stages depend on ea
 **Learning purpose:** learn why vector search alone misses things, which fixes exist, and to keep only what the Stage 2 score says helps.
 
 - **Lexical vs semantic search:** embeddings are good at paraphrase but weak at exact terms (error codes, product names, CLI flags like `--workspace`). Keyword search is the opposite. Postgres full-text search (`tsvector`, `ts_rank`) covers the keyword side.
+- **Thai caveat:** Thai is written without spaces between words, and Postgres has no Thai word splitter, so its built-in full-text search will not work on the corpus as is. Options to evaluate: trigram matching (`pg_trgm`), or splitting Thai into words at ingest time before indexing.
 - **Hybrid search:** running both and merging the rankings, e.g. with reciprocal rank fusion, which merges by rank position so the two different score scales never have to be compared.
 - **Reranking:** retrieve more candidates cheaply (say 20), then score each one against the question with a slower, more precise model and keep the best 5. This trades latency for precision.
 - **Query rewriting:** having the LLM rephrase or expand the question before searching ("paged at 3am" → "on-call page outside working hours"). It helps vague questions, adds a model call, and can drift from what the user meant.

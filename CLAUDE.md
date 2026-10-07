@@ -51,6 +51,7 @@ The roadmap, with each stage's learning purpose and done criteria, is in `docs/p
 1. **Model provider**: local models via Ollama for both chat (`qwen2.5:7b`) and embeddings (`bge-m3`, replaced `nomic-embed-text`, which cannot read Thai). The embedding model sets `DIM`, and swapping models means re-embedding the corpus.
 2. **Corpus**: the user's own docs (Markdown/plain text), placed in the git-ignored `corpus/` folder. Chosen because the chat model has never seen them, so a correct answer must come from retrieval and citations can be checked. Never commit corpus content.
 3. **Frontend**: Next.js.
+4. **DB access stays plain SQL via `pg`** (Prisma and Drizzle were considered). Prisma has no pgvector type, and Stage 3's hybrid search needs SQL that ORMs handle poorly. Reading the SQL is part of the learning goal, so explain each new query in plain language when adding it.
 
 ## Commands
 

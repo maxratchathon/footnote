@@ -1,6 +1,6 @@
 # Stage 1, part 2: question flow
 
-**Status:** built; terminal and API verified, browser check pending review
+**Status:** done (2026-10-07)
 **Depends on:** ingestion (done: 47 chunks from `sample-corpus/` in Postgres)
 
 Goal: a question typed in the browser streams back an answer whose `[n]` markers each open the source chunk they came from. Questions the corpus does not answer get an explicit refusal, not a guess.
@@ -82,3 +82,9 @@ Terminal run on 2026-10-07 with `qwen2.5:7b`. All four pass.
 The CEO question's best match was at distance 0.372, against 0.27–0.30 for real answers: too small a gap for a reliable cutoff, which supports leaving refusals to the model.
 
 Done when all four behave as expected in the browser, citations open the right chunk, and each question leaves a row in `traces`. Stop for review before committing.
+
+## Follow-up: Thai corpus and the embedding model
+
+With the real corpus (a Thai rental-room guide, 93 chunks), every Thai question retrieved the same 5 chunks. `nomic-embed-text`'s English-only tokenizer turned all Thai text into the same unknown tokens: ค่าเสียโอกาส, เพชรบุรี and กลโกง embedded with similarity 1.000. Ingest and search raised no errors; the right section (14) ranked 38th.
+
+Switched to `bge-m3` (multilingual, 1024 dims) with `pnpm db:reset-embeddings` and a re-ingest. ค่าเสียโอกาส now retrieves all four section 14 chunks as the top 4, and the answer is in Thai with citations.
