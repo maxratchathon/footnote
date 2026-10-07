@@ -1,0 +1,16 @@
+Halyard Labs FAQ
+
+Who founded Halyard Labs?
+Halyard Labs was founded in 2019 by Ines Carvalho and Tomasz Wrona, who previously built asset pipelines for an animation studio. The company has around 70 employees.
+
+Where is the office?
+The only office is in Leith, Edinburgh. It has eight desks and a meeting room, and is open to all staff.
+
+Which tools does the company use?
+Slack for chat, Ledgerline for expenses and travel, Linear for issue tracking, and the internal wiki for documentation.
+
+Who do I ask about payroll?
+Payroll questions go to People Ops in the #people channel. Expense questions go to Finance in #finance.
+
+How do I report a security issue?
+Email security@halyard.example or post in the private #security channel. Do not open a public ticket.
