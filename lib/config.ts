@@ -22,4 +22,20 @@ export const config = {
     // by default, so this stays well under it even for dense code.
     maxChars: 2000,
   },
+
+  retrieval: {
+    // Chunks put in the prompt. Enough to catch a useful second source
+    // without burying a 7B model in text. Tuned by Stage 2 evals.
+    topK: 5,
+  },
+
+  chat: {
+    // Ollama silently drops the start of a prompt longer than its context
+    // window (default 4096 tokens here), which would cut off the system rules.
+    // 5 chunks × 2000 chars ≈ 2500 tokens, plus rules and answer, fits in 8192.
+    contextTokens: 8192,
+    // 0 = always pick the most likely token. Grounded answers should not be
+    // creative, and identical runs make debugging and evals reproducible.
+    temperature: 0,
+  },
 } as const;

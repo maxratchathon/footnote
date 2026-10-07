@@ -4,7 +4,7 @@ FootnoteRAG is a learning project: each stage exists to teach one part of how a 
 
 | Stage | Topic | Status | Detailed plan |
 |---|---|---|---|
-| 1 | Basic RAG | In progress: ingestion done, question flow planned | [stage-1-question-flow.md](stage-1-question-flow.md) |
+| 1 | Basic RAG | In progress: ingestion done, question flow built (awaiting review) | [stage-1-question-flow.md](stage-1-question-flow.md) |
 | 2 | Evals | Not started; needs the real corpus | — |
 | 3 | Better retrieval | Not started | — |
 | 4 | Agent loop | Not started | — |
@@ -26,11 +26,11 @@ Finish and verify each stage before starting the next. Later stages depend on ea
 
 **What we build**
 - Part 1, done: `pnpm ingest` reads Markdown/text, chunks it at headings and paragraphs, embeds the chunks with `nomic-embed-text` and stores them in pgvector. Re-running it only processes changed files.
-- Part 2, planned: question → embed → top-k → prompt → streamed answer with `[n]` markers that open their source chunk in the UI. Each question is logged in `traces`.
+- Part 2, built: question → embed → top-k → prompt → streamed answer with `[n]` markers that open their source chunk in the UI. Each question is logged in `traces`.
 
 **Done when:** a question about the corpus returns a streamed answer with working citations, and an off-topic question gets a refusal instead of a guess.
 
-**Observed so far:** "What happens if I get paged at 3am?" found the right document but not the right section (`On-call > Pay`). This is the first concrete retrieval miss, and it motivates Stages 2 and 3.
+**Observed so far:** "What happens if I get paged at 3am?" found the right document but ranked the right section (`On-call > Pay`) only 4th. Top 5 rescued it; top 3 would have missed it. This is the first concrete retrieval weak spot, and it motivates Stages 2 and 3.
 
 ---
 

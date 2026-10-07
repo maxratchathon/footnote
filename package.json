@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "db:up": "docker compose up -d db",
     "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
-    "ingest": "tsx --env-file=.env scripts/ingest.ts"
+    "ingest": "tsx --env-file=.env scripts/ingest.ts",
+    "ask": "tsx --env-file=.env scripts/ask.ts"
   },
   "dependencies": {
     "next": "^16.4.0",

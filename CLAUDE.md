@@ -60,10 +60,11 @@ Package manager is **pnpm**. Copy `.env.example` to `.env` first (scripts load i
 pnpm db:up                           # Postgres + pgvector via docker compose
 pnpm db:migrate                      # apply db/migrations/*.sql not yet in schema_migrations
 ollama pull nomic-embed-text         # embedding model (EMBED_MODEL)
-ollama pull llama3.1:8b              # chat model (CHAT_MODEL)
+ollama pull qwen2.5:7b               # chat model (CHAT_MODEL)
 pnpm ingest [folder]                 # chunk + embed + store; default folder is corpus/
 pnpm ingest sample-corpus --dry-run  # show chunking only, no Ollama or DB needed
-pnpm dev                             # Next.js app
+pnpm ask "question"                   # full question flow in the terminal (no UI)
+pnpm dev                             # Next.js app (API: POST /api/ask, streams SSE)
 pnpm typecheck
 ```
 
@@ -71,14 +72,17 @@ There is no test runner yet; Stage 2 evals will be the main quality check.
 
 ## Code layout
 
-- `lib/`: shared by the Next.js app and the scripts. `config.ts` (env + tunables such as chunk sizes), `db.ts` (pg pool), `ollama.ts` (embedding via Ollama's HTTP API with plain `fetch`, no SDK), `chunk.ts` (Markdown chunker).
-- `scripts/`: CLI entry points run with `tsx` (`migrate.ts`, `ingest.ts`).
+- `lib/`: shared by the Next.js app and the scripts. `config.ts` (env + tunables such as chunk sizes), `db.ts` (pg pool), `ollama.ts` (embedding via Ollama's HTTP API with plain `fetch`, no SDK), `chunk.ts` (Markdown chunker), `retrieve.ts` (top-k vector search), `prompt.ts` (rules + numbered sources), `ask.ts` (whole question flow as an async generator of events; route and CLI are thin wrappers), `citations.ts` (marker parsing, shared by server check and UI).
+- `scripts/`: CLI entry points run with `tsx` (`migrate.ts`, `ingest.ts`, `ask.ts`).
+- `lib/ask-events.ts`, `lib/citations.ts` and `lib/prompt.ts` are imported by the client page, so they must stay free of server-only imports (`pg`, `config`).
 - `db/migrations/`: plain SQL. `{{EMBED_DIM}}` is substituted from `EMBED_DIM` by the migration runner.
 - `sample-corpus/`: invented docs for a fictional company (Halyard Labs, product Tidewater) for smoke tests. Too small for evals. The real corpus goes in the git-ignored `corpus/`.
 - `docs/plans/`: `overview.md` (roadmap and status table, keep it current) plus one implementation plan per piece of work, with checkboxes. Read the relevant plan before starting, tick items off as they are done, and update its status line.
 
 ## Retrieval details that span files
 
+- Answers are checked after streaming: status `cited`, `refusal` (exactly the `REFUSAL` sentence in `lib/prompt.ts`), `uncited` or `invalid` (a marker outside 1..k). The UI shows a warning for the last two; never hide them.
+- Ollama chat runs with an explicit `num_ctx` (`config.chat.contextTokens`): Ollama silently truncates prompts beyond its context window, dropping the system rules first.
 - nomic-embed-text needs task prefixes: `search_document: ` when ingesting and `search_query: ` for questions (`lib/ollama.ts`). The question flow must use `"search_query"`.
 - Chunks never cross headings, are packed by paragraph up to `targetChars`, and start with a heading breadcrumb (`Title > Section > Subsection`). The stored `content` is exactly the embedded text, which is also what a citation shows.
 - Ingestion is idempotent: keyed by `source_path` (unique), unchanged hashes are skipped, changed files are replaced whole, and files deleted from the folder are removed from the DB.

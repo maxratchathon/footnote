@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
   title: "FootnoteRAG",
   description: "Chat with your docs, with every answer cited.",
