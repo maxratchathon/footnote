@@ -1,17 +1,23 @@
 import { config } from "./config";
 
-// nomic-embed-text is trained with task prefixes: documents and queries are
-// embedded differently, and leaving the prefixes off measurably hurts
-// retrieval. Other embedding models may need different (or no) prefixes.
-export type EmbedTask = "search_document" | "search_query";
+// Some embedding models are trained with task prefixes, so documents and
+// queries are embedded differently; leaving the prefixes off measurably hurts
+// retrieval. Others (bge-m3) take raw text. The prefixes are a property of
+// the model, so they are looked up by model name, not hardcoded.
+export type EmbedTask = "document" | "query";
+
+const PREFIXES: Record<string, Record<EmbedTask, string>> = {
+  "nomic-embed-text": { document: "search_document: ", query: "search_query: " },
+};
 
 export async function embed(texts: string[], task: EmbedTask): Promise<number[][]> {
+  const prefix = PREFIXES[config.embedModel.replace(/:latest$/, "")]?.[task] ?? "";
   const res = await fetch(`${config.ollamaUrl}/api/embed`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: config.embedModel,
-      input: texts.map((t) => `${task}: ${t}`),
+      input: texts.map((t) => prefix + t),
     }),
   });
   if (!res.ok) {

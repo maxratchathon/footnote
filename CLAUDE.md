@@ -48,7 +48,7 @@ The roadmap, with each stage's learning purpose and done criteria, is in `docs/p
 
 ## Decisions
 
-1. **Model provider**: local models via Ollama for both chat and embeddings. The embedding model sets `DIM`, and swapping models means re-embedding the corpus.
+1. **Model provider**: local models via Ollama for both chat (`qwen2.5:7b`) and embeddings (`bge-m3`, replaced `nomic-embed-text`, which cannot read Thai). The embedding model sets `DIM`, and swapping models means re-embedding the corpus.
 2. **Corpus**: the user's own docs (Markdown/plain text), placed in the git-ignored `corpus/` folder. Chosen because the chat model has never seen them, so a correct answer must come from retrieval and citations can be checked. Never commit corpus content.
 3. **Frontend**: Next.js.
 
@@ -59,7 +59,8 @@ Package manager is **pnpm**. Copy `.env.example` to `.env` first (scripts load i
 ```sh
 pnpm db:up                           # Postgres + pgvector via docker compose
 pnpm db:migrate                      # apply db/migrations/*.sql not yet in schema_migrations
-ollama pull nomic-embed-text         # embedding model (EMBED_MODEL)
+pnpm db:reset-embeddings             # after changing EMBED_MODEL/EMBED_DIM: clear docs, resize vector column, then re-ingest
+ollama pull bge-m3                   # embedding model (EMBED_MODEL), multilingual incl. Thai
 ollama pull qwen2.5:7b               # chat model (CHAT_MODEL)
 pnpm ingest [folder]                 # chunk + embed + store; default folder is corpus/
 pnpm ingest sample-corpus --dry-run  # show chunking only, no Ollama or DB needed
@@ -83,6 +84,8 @@ There is no test runner yet; Stage 2 evals will be the main quality check.
 
 - Answers are checked after streaming: status `cited`, `refusal` (exactly the `REFUSAL` sentence in `lib/prompt.ts`), `uncited` or `invalid` (a marker outside 1..k). The UI shows a warning for the last two; never hide them.
 - Ollama chat runs with an explicit `num_ctx` (`config.chat.contextTokens`): Ollama silently truncates prompts beyond its context window, dropping the system rules first.
-- nomic-embed-text needs task prefixes: `search_document: ` when ingesting and `search_query: ` for questions (`lib/ollama.ts`). The question flow must use `"search_query"`.
+- **The embedding model must cover the corpus language.** The real corpus is Thai. `nomic-embed-text` has an English-only tokenizer: every Thai string embedded to the same vector, so search was silently random (ingest and search raised no errors). Use a multilingual model (`bge-m3`, 1024 dims) and check new models on Thai text before trusting them.
+- Task prefixes are per model (`PREFIXES` in `lib/ollama.ts`; nomic needs `search_document: `/`search_query: `, bge-m3 needs none). Callers pass `"document"` or `"query"`.
+- Switching embedding models means `pnpm db:reset-embeddings` and re-ingesting everything. Never mix vectors from two models. Ingest's hash check does not know which model embedded a file, so a same-dimension model swap without a reset would silently mix them.
 - Chunks never cross headings, are packed by paragraph up to `targetChars`, and start with a heading breadcrumb (`Title > Section > Subsection`). The stored `content` is exactly the embedded text, which is also what a citation shows.
 - Ingestion is idempotent: keyed by `source_path` (unique), unchanged hashes are skipped, changed files are replaced whole, and files deleted from the folder are removed from the DB.

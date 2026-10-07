@@ -57,7 +57,7 @@ async function main() {
     // database locks.
     const embeddings: number[][] = [];
     for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
-      embeddings.push(...(await embed(chunks.slice(i, i + EMBED_BATCH), "search_document")));
+      embeddings.push(...(await embed(chunks.slice(i, i + EMBED_BATCH), "document")));
     }
 
     const client = await pool.connect();

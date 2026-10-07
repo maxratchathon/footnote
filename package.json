@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:up": "docker compose up -d db",
     "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "db:reset-embeddings": "tsx --env-file=.env scripts/reset-embeddings.ts",
     "ingest": "tsx --env-file=.env scripts/ingest.ts",
     "ask": "tsx --env-file=.env scripts/ask.ts"
   },
