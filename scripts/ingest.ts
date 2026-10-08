@@ -4,7 +4,7 @@
 //   pnpm ingest [folder] [--dry-run]
 //
 // Re-running is cheap and safe. Each file is keyed by its path; unchanged
-// files (same content hash) are skipped, changed files are replaced, and
+// files (same content and chunking/embedding settings) are skipped, changed files are replaced, and
 // documents whose file has been deleted are removed. With --dry-run nothing
 // is embedded or written: it only shows how the files would be chunked.
 
@@ -34,7 +34,7 @@ async function main() {
 
   for (const file of files) {
     const raw = await readFile(file, "utf8");
-    const hash = createHash("sha256").update(raw).digest("hex");
+    const hash = ingestHash(raw);
     const fallbackTitle = path.basename(file, path.extname(file));
     const { title, chunks } = parseMarkdown(raw, fallbackTitle, config.chunking);
     sizes.push(...chunks.map((c) => c.length));
@@ -103,6 +103,19 @@ async function main() {
     `\n${files.length} files, ${sizes.length} chunks; chunk chars min ${sizes[0]}, ` +
       `median ${sizes[Math.floor(sizes.length / 2)]}, max ${sizes.at(-1)}`,
   );
+}
+
+// The "skip if unchanged" key. It covers the file *and* every setting that
+// shapes its stored chunks: changing chunk sizes or the embedding model leaves
+// the file bytes identical, but the stored chunks are then stale. Hashing only
+// the content would keep them, and evals would silently score old settings.
+function ingestHash(raw: string): string {
+  const settings = JSON.stringify({
+    embedModel: config.embedModel,
+    targetChars: config.chunking.targetChars,
+    maxChars: config.chunking.maxChars,
+  });
+  return createHash("sha256").update(settings).update("\0").update(raw).digest("hex");
 }
 
 async function listFiles(root: string): Promise<string[]> {
