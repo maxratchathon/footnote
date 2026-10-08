@@ -5,7 +5,7 @@ FootnoteRAG is a learning project: each stage exists to teach one part of how a 
 | Stage | Topic | Status | Detailed plan |
 |---|---|---|---|
 | 1 | Basic RAG | Done | [stage-1-question-flow.md](stage-1-question-flow.md) |
-| 2 | Evals | Next; corpus is a Thai rental-room guide (93 chunks) | — |
+| 2 | Evals | In progress: eval command works; question set awaits rewrite | [stage-2-evals.md](stage-2-evals.md) |
 | 3 | Better retrieval | Not started | — |
 | 4 | Agent loop | Not started | — |
 | 5 | Production concerns | Not started | — |

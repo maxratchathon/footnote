@@ -12,7 +12,8 @@
     "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
     "db:reset-embeddings": "tsx --env-file=.env scripts/reset-embeddings.ts",
     "ingest": "tsx --env-file=.env scripts/ingest.ts",
-    "ask": "tsx --env-file=.env scripts/ask.ts"
+    "ask": "tsx --env-file=.env scripts/ask.ts",
+    "eval": "tsx --env-file=.env scripts/eval.ts"
   },
   "dependencies": {
     "next": "^16.4.0",

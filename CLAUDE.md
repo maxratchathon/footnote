@@ -66,16 +66,18 @@ ollama pull qwen2.5:7b               # chat model (CHAT_MODEL)
 pnpm ingest [folder]                 # chunk + embed + store; default folder is corpus/
 pnpm ingest sample-corpus --dry-run  # show chunking only, no Ollama or DB needed
 pnpm ask "question"                   # full question flow in the terminal (no UI)
+pnpm eval [file] [--note "..."]      # retrieval score (hit@k, MRR) for corpus/evals.json, saved to eval_runs
 pnpm dev                             # Next.js app (API: POST /api/ask, streams SSE)
 pnpm typecheck
 ```
 
-There is no test runner yet; Stage 2 evals will be the main quality check.
+There is no test runner; `pnpm eval` is the main quality check. After changing chunk settings, re-ingest before evaluating.
 
 ## Code layout
 
-- `lib/`: shared by the Next.js app and the scripts. `config.ts` (env + tunables such as chunk sizes), `db.ts` (pg pool), `ollama.ts` (embedding via Ollama's HTTP API with plain `fetch`, no SDK), `chunk.ts` (Markdown chunker), `retrieve.ts` (top-k vector search), `prompt.ts` (rules + numbered sources), `ask.ts` (whole question flow as an async generator of events; route and CLI are thin wrappers), `citations.ts` (marker parsing, shared by server check and UI).
-- `scripts/`: CLI entry points run with `tsx` (`migrate.ts`, `ingest.ts`, `ask.ts`).
+- `lib/`: shared by the Next.js app and the scripts. `config.ts` (env + tunables such as chunk sizes), `db.ts` (pg pool), `ollama.ts` (embedding via Ollama's HTTP API with plain `fetch`, no SDK), `chunk.ts` (Markdown chunker), `retrieve.ts` (top-k vector search), `prompt.ts` (rules + numbered sources), `ask.ts` (whole question flow as an async generator of events; route and CLI are thin wrappers), `citations.ts` (marker parsing, shared by server check and UI), `eval.ts` (label matching and hit@k/MRR scoring, no I/O).
+- `scripts/`: CLI entry points run with `tsx` (`migrate.ts`, `ingest.ts`, `ask.ts`, `eval.ts`).
+- `corpus/evals.json` (git-ignored): eval questions. Each `expected` item is `{ section, evidence }`: a heading number (`"12.2"`, `"ก.3"`) plus a short substring of the answer, so only the chunk that holds the answer counts at any chunk size. List every section that answers a question; the corpus repeats facts in appendices and the FAQ.
 - `lib/ask-events.ts`, `lib/citations.ts` and `lib/prompt.ts` are imported by the client page, so they must stay free of server-only imports (`pg`, `config`).
 - `db/migrations/`: plain SQL. `{{EMBED_DIM}}` is substituted from `EMBED_DIM` by the migration runner.
 - `sample-corpus/`: invented docs for a fictional company (Halyard Labs, product Tidewater) for smoke tests. Too small for evals. The real corpus goes in the git-ignored `corpus/`.
