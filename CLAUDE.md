@@ -81,6 +81,7 @@ There is no test runner; `pnpm eval` is the main quality check. After changing c
 - `lib/ask-events.ts`, `lib/citations.ts` and `lib/prompt.ts` are imported by the client page, so they must stay free of server-only imports (`pg`, `config`).
 - `db/migrations/`: plain SQL. `{{EMBED_DIM}}` is substituted from `EMBED_DIM` by the migration runner.
 - `sample-corpus/`: invented docs for a fictional company (Halyard Labs, product Tidewater) for smoke tests. Too small for evals. The real corpus goes in the git-ignored `corpus/`.
+- `docs/changelog.md`: dated log of what changed and what it taught, newest first, with a "Resume here" section at the top. Read it when starting a session; add an entry and update "Resume here" when a session ends. No corpus content in it.
 - `docs/plans/`: `overview.md` (roadmap and status table, keep it current) plus one implementation plan per piece of work, with checkboxes. Read the relevant plan before starting, tick items off as they are done, and update its status line.
 
 ## Retrieval details that span files
